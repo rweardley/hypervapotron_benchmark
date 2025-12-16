@@ -1,10 +1,9 @@
 [GENERAL]
 polynomialOrder = 3
 
-startFrom = "hvt_restart0.f00010"
 stopAt = endTime
-endTime = 32.0                  # simulation end time [ND]
-dt = targetCFL=0.5 + max=1.0e-4 + initial=4.0e-5  # adaptive timestep
+endTime = 2.0                   # simulation end time [ND]
+dt = targetCFL=3.0 + max=1.0e-3 + initial=1.0e-6  # adaptive timestep
 timeStepper = tombo2            # timestepping scheme
 subCyclingSteps = 0
 checkpointControl = simulationTime
@@ -18,6 +17,6 @@ residualTol = 1e-4              # absolute pressure tolerance [ND]
 
 [VELOCITY]
 boundaryTypeMap = w             # no-slip walls (periodic inlet/outlet)
-viscosity = -1.0e4              # dynamic viscosity=1/Re (-Re equivalent to 1/Re) [ND]
+viscosity = 1.0/43843.0         # dynamic viscosity=1/Re (-Re equivalent to 1/Re) [ND]
 density = 1.0                   # density=1 [ND]
 residualTol = 1.0e-6            # absolute velocity tolerance [ND]

@@ -1,0 +1,129 @@
+# create rough solid block (volume 1)
+
+brick x 6.0 y 30.0 z 112.0
+volume 1 rename "solid_block"
+
+# create central gap cutout tool (volume 2)
+
+brick x 6.0 y 23.5 z 1.0
+volume 2 rename "central_gap"
+move volume 2 y -3.25 include_merged
+create Cylinder height 6.0 radius 0.5
+volume 3 rename "central_cap_rounded"
+rotate Volume 3 angle 90  about Y include_merged
+move Volume 3 y 8.5 include_merged
+unite volume 2 3
+compress
+
+# create fluid bulk region (volume 3)
+
+brick x 6.0 y 8.0 z 48.0
+volume 3 rename "fluid_bulk"
+move volume 3 y 3.0 z 28.0 include_merged
+
+# create corner round off tool (volume 4)
+
+create cylinder height 6.0 radius 6.0
+rotate volume 4 angle 90 about y include_merged
+move volume 4 y 9.0 z 50.0 include_merged
+volume 4 rename "corner_tool_cutout"
+brick x 6.0 y 6.0 z 6.0
+move volume 5 y 12.0 z 53.0 include_merged
+volume 5 rename "corner_tool"
+subtract volume 4 from volume 5
+compress
+
+# create cavity cutout tool (volume 5)
+
+brick x 3.0 y 2.5 z 45.75
+create cylinder height 46.5 radius 1.5
+volume 5 rename "cavity_A"
+volume 6 rename "cavity_B"
+move volume 6 y 1.25 include_merged
+unite volume 6 5
+volume 6 rename "cavity_tool"
+vol all vis on
+move volume 6 location 0 0 0 include_merged
+move volume 6 y 9.0 include_merged
+move volume 6 z 28.0 include_merged
+compress
+
+# create outer slot tool (volume 6)
+
+brick x 6.0 y 3.5 z 1.5
+move volume 6 y 8.5 z 51.25 include_merged
+volume 6 rename "outer_slot_tool"
+
+# round off the outer slot tool
+
+create Cylinder height 6.0 radius 0.75
+rotate volume 7 angle 90 about y include_merged
+move Volume 7 y 10.25 z 51.25 include_merged
+unite volume 6 7
+compress
+
+# create inner slot tool (volume 7)
+
+volume 6 copy reflect z
+move volume 7 z 56.0 include_merged
+volume 7 rename "inner_slot_tool"
+
+# unite the fluid region
+
+unite volume 3 5 6 7
+compress
+
+# put a round on sharp edges
+
+# NOTE: some errors are thrown here because sharp edges adjacent to rounded edges are automatically rounded,
+#       so the curve ID is changed and therefore this causes errors for missing curve IDs
+
+# {R=0.3}
+tweak curve 25 fillet radius {R} {R}
+tweak curve 26 fillet radius {R} {R}
+tweak curve 44 fillet radius {R} {R}
+tweak curve 45 fillet radius {R} {R}
+tweak curve 46 fillet radius {R} {R}
+tweak curve 49 fillet radius {R} {R}
+tweak curve 51 fillet radius {R} {R}
+tweak curve 52 fillet radius {R} {R}
+tweak curve 54 fillet radius {R} {R}
+tweak curve 55 fillet radius {R} {R}
+tweak curve 57 fillet radius {R} {R}
+tweak curve 58 fillet radius {R} {R}
+tweak curve 60 fillet radius {R} {R}
+tweak curve 61 fillet radius {R} {R}
+tweak curve 62 fillet radius {R} {R}
+tweak curve 63 fillet radius {R} {R}
+tweak curve 65 fillet radius {R} {R}
+tweak curve 66 fillet radius {R} {R}
+tweak curve 67 fillet radius {R} {R}
+tweak curve 72 fillet radius {R} {R}
+
+
+# cut out fluid region, central web, and corner from solid
+
+subtract volume 2  from volume 1
+subtract volume 4  from volume 1
+subtract volume 3 from volume 1 keep_tool
+
+# webcut z plane symmetry
+
+webcut volume 1 with plane zplane offset 0
+delete volume 5
+
+# renumber volumes (1: solid, 2: fluid)
+imprint volume all
+merge volume all
+compress
+
+# make some composite surfaces
+composite create surface 31 28 23 21 9 3 keep angle 15
+compress
+
+# list model details
+List Model
+
+save cub5 "geometry.cub5" overwrite journal
+export step "solid_geometry.stp" volume 1 overwrite
+export step "fluid_geometry.stp" volume 2 overwrite
