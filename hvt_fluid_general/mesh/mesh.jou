@@ -1,0 +1,104 @@
+open "geometry.cub5"
+
+# Cut geometry in half
+
+webcut volume 1 2 with plane xplane
+imprint volume all 
+merge volume all 
+compress
+
+# Delete solid volume
+delete volume 1 3
+
+# create surface groups for fluid volume (volume 2)
+
+create group "rounded_edge_surfaces"
+rounded_edge_surfaces add surface 14 15 16 17 18 19 23 37 39 
+
+create group "rounded_cavity_surfaces"
+rounded_cavity_surfaces add surface 31 32 33 
+
+create group "flat_cavity_surfaces"
+flat_cavity_surfaces add surface 2 3 5 9 
+
+create group "flat_side_surfaces"
+flat_side_surfaces add surface 34 38 40
+
+create group "flat_streamwise_surfaces"
+flat_streamwise_surfaces add surface 10 
+
+create group "flat_tangential_surfaces"
+flat_tangential_surfaces add surface 58
+
+create group "base_boundary_surfaces"
+base_boundary_surfaces add surface in rounded_edge_surfaces
+base_boundary_surfaces add surface in rounded_cavity_surfaces
+base_boundary_surfaces add surface in flat_cavity_surfaces
+base_boundary_surfaces add surface in flat_side_surfaces
+
+# add boundary layers
+
+create boundary_layer 1
+modify boundary_layer 1 uniform height {5.0e-02} growth 1.15 layers 3
+modify boundary_layer 1 add surface in base_boundary_surfaces volume 2
+modify boundary_layer 1 continuity on
+
+# mesh size
+
+# volume 2 size 1.0
+surface in base_boundary_surfaces size 0.5
+
+volume 2 sizing function type skeleton min_size auto max_size 1.15 max_gradient 1.1 min_num_layers_3d 3 min_num_layers_2d 1 min_num_layers_1d 1
+volume 2 sizing function type skeleton add size_source surface in base_boundary_surfaces size 0.5 num_layers 2
+
+set trimesher coarse off
+set trimesher surface gradation 1.1
+set trimesher volume gradation 1.1
+set tetmesher optimize overconstrained tetrahedra on
+set tetmesher optimize overconstrained edges on
+set tetmesher optimize sliver on
+
+tetmesher optimize level 6
+volume 2 scheme tetmesh
+volume 2 tetmesh growth_factor 1.1
+
+# generate fluid mesh
+
+volume 2 scheme tetmesh
+mesh volume 2
+
+# copy fluid mesh to the other half
+
+volume 2 copy reflect x
+merge volume 2 5
+delete volume 4
+
+# Set 2nd order elements
+
+block 1 add volume 2 5
+block 1 element type TETRA10
+block 1 element type WEDGE15
+
+# list model details
+
+List Model
+
+# Create sidesets for fluid BCs and export mesh
+
+# {Lref=0.006}
+# {mm2m=0.001}
+transform mesh output scale {mm2m/Lref}
+set exodus netcdf4 off
+set large exodus file on
+
+sideset 1 add surface 78 wrt volume 5
+sideset 1 name "inlet"
+sideset 2 add surface 10 wrt volume 2
+sideset 2 name "outlet"
+sideset 3 add surface in base_boundary_surfaces wrt volume 2
+sideset 3 add surface 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 79 wrt volume 5
+sideset 3 name "fluid_solid_interface"
+
+export mesh "mesh.exo" block 1 overwrite
+
+save cub5 "mesh.cub5" overwrite journal

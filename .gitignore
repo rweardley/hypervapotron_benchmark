@@ -7,11 +7,13 @@ log.*
 *.tgz
 *.tar.gz
 
-# mesh formats
+# mesh/geometry formats
 *.re2
 *.exo
 *.e
 *.stl
+*.cub5
+*.stp
 
 # editors
 .vscode
